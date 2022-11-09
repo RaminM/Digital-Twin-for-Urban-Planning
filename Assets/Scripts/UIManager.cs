@@ -13,6 +13,8 @@ public class UIManager : MonoBehaviour
     TMP_Dropdown lightDropDown, camDropDown, heatDropDown, saveDropDown,itemDropDown;
     [SerializeField]
     private GameObject sun, spawnManager;
+    [SerializeField]
+    TMP_Text txtWalkScore,txtPowerScore;
 
     public void UpdateTimeDate(DateTime dateTime)
     {
@@ -151,5 +153,12 @@ public class UIManager : MonoBehaviour
     {
         saveDropDown.ClearOptions();
         saveDropDown.AddOptions(sl);
+    }
+    public void SetWalkScore(float score){
+        txtWalkScore.SetText("Walkability Score: " +score );
+    }
+    public void SetPowerScore(float score){
+
+        txtPowerScore.SetText("Energy Score: " +score );
     }
 }

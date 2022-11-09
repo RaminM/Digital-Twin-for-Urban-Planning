@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using Mapbox.Utils;
 using Mapbox.Unity.Map;
+using UnityEngine.SceneManagement;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -17,11 +18,12 @@ public class SpawnManager : MonoBehaviour
     AbstractMap _map;
     private bool spawnHeatmap = false;
 
-    private bool spawnLight = false, spawnCamera = false, spawnBuilding = true;
+    private bool spawnLight = false, spawnCamera = false, spawnBuilding = false;
 
     private List<GameObject> spawnedLights = new List<GameObject>();
     private List<Camera> spawnedCameras = new List<Camera>();
     private List<GameObject> spawnedHeatmaps = new List<GameObject>();
+    private List<GameObject> spawnedBuildings = new List<GameObject>();
     private List<string> saveNameList = new List<string>();
     private GameObject lightIns, heatmapPreviewIns, buildingPreviewIns;
     private int lightCounter = 1, camCounter = 1, heatCounter = 1, saveCounter = 1;
@@ -29,11 +31,27 @@ public class SpawnManager : MonoBehaviour
     private int camToEdit, lightToEdit;
     [SerializeField]
     private float objectMoveSpeed = 10;
-    // Update is called once per frame
+    //Input data
+    List<string[]> waDataSet, trDataSet, roDataset;
+    List<Vector3> trDatasetLocal, waDatasetLocal, roDatasetLocal;
+    Vector2d[] waLocations, roLocations;
+
     void Start()
     {
         heatmapPreviewIns = Instantiate(heatmapPrefab, new Vector3(0, -10f, 0), Quaternion.identity);
         buildingPreviewIns = Instantiate(buildingPrefab, new Vector3(0, -10f, 0), Quaternion.identity);
+        //Redading and preparing the data
+        waDataSet = new List<string[]>();
+        trDataSet = new List<string[]>();
+        roDataset = new List<string[]>();
+        trDatasetLocal = new List<Vector3>();
+        waDatasetLocal = new List<Vector3>();
+        roDatasetLocal = new List<Vector3>();
+        ReadCSVDataFiles();
+        waLocations = new Vector2d[waDataSet.Count];
+        roLocations = new Vector2d[roDataset.Count];
+        waDataSet.RemoveAt(0);
+        trDataSet.RemoveAt(0);
     }
     void Update()
     {
@@ -112,6 +130,9 @@ public class SpawnManager : MonoBehaviour
                     if (Physics.Raycast(ray, out hitData))
                     {
                         GameObject buildingIns = Instantiate(buildingPrefab, hitData.point, Quaternion.identity);
+                        buildingIns.GetComponent<BuildingParameterCalculator>().CalcWalkabilityScore(waDataSet,_map);
+                        buildingIns.GetComponent<BuildingParameterCalculator>().CalcPowerConsumption();
+                        spawnedBuildings.Add(buildingIns);
 
                     }
 
@@ -186,14 +207,18 @@ public class SpawnManager : MonoBehaviour
             spawnLight = false;
             spawnCamera = false;
             spawnHeatmap = false;
+            spawnBuilding = false;
             Destroy(heatmapPreviewIns);
+            Destroy(buildingPreviewIns);
         }
         else if (ind == 1)
         {
             spawnLight = true;
             spawnCamera = false;
             spawnHeatmap = false;
+            spawnBuilding = false;
             Destroy(heatmapPreviewIns);
+            Destroy(buildingPreviewIns);
 
         }
         else if (ind == 2)
@@ -201,7 +226,9 @@ public class SpawnManager : MonoBehaviour
             spawnLight = false;
             spawnCamera = true;
             spawnHeatmap = false;
+            spawnBuilding = false;
             Destroy(heatmapPreviewIns);
+            Destroy(buildingPreviewIns);
         }
         else if (ind == 3)
         {
@@ -210,6 +237,17 @@ public class SpawnManager : MonoBehaviour
             spawnHeatmap = true;
             spawnLight = false;
             spawnCamera = false;
+            spawnBuilding = false;
+
+        }
+        else if (ind == 4)
+        {
+            if (buildingPreviewIns == null)
+                buildingPreviewIns = Instantiate(heatmapPrefab, this.transform.position, Quaternion.identity);
+            spawnHeatmap = false;
+            spawnLight = false;
+            spawnCamera = false;
+            spawnBuilding = true;
 
         }
     }
@@ -307,7 +345,7 @@ public class SpawnManager : MonoBehaviour
     public void Save()
     {
         string name = "Save " + saveCounter;
-        WriteCSVFile(name);
+        WriteCSVSaveFile(name);
         saveNameList.Add(name);
         saveCounter++;
         canvas.GetComponent<UIManager>().UpdateSaveList(saveNameList);
@@ -317,9 +355,9 @@ public class SpawnManager : MonoBehaviour
     {
         name = saveNameList[index];
         RemoveCamAndLights();
-        ReadCSVFile(name);
+        ReadCSVSaveFile(name);
     }
-    void ReadCSVFile(string name)
+    void ReadCSVSaveFile(string name)
     {
         Debug.Log(name);
         TextAsset myTextAsset = Resources.Load<TextAsset>(name);
@@ -359,7 +397,7 @@ public class SpawnManager : MonoBehaviour
 
 
     }
-    void WriteCSVFile(string name)
+    void WriteCSVSaveFile(string name)
     {
         string namePath = Application.dataPath + "/Resources/" + name + ".csv";
         TextWriter tw = new StreamWriter(namePath, false);
@@ -395,5 +433,62 @@ public class SpawnManager : MonoBehaviour
         canvas.GetComponent<UIManager>().UpdateCameraList(spawnedCameras);
         lightCounter = 0;
         camCounter = 0;
+    }
+    void ReadCSVDataFiles()
+    {
+        TextAsset myTextAsset;
+        string csvText;
+        string[] rows;
+        //Walkability
+        myTextAsset = Resources.Load<TextAsset>("walkability_n"); // omit file extension
+        csvText = myTextAsset.text;
+        rows = csvText.Split(
+            new[] { "\r\n", "\r", "\n" },
+            StringSplitOptions.None
+        );
+        for (int i = 1; i < rows.GetLength(0) - 1; i++)
+        {
+            string[] dataRowArray = rows[i].Split(',');
+            waDataSet.Add(dataRowArray);
+            // Vector2d tempLoc = new Vector2d(double.Parse(dataRowArray[1]), double.Parse(dataRowArray[0]));
+            // Vector3 tempLocalLoc = _map.GeoToWorldPosition(tempLoc, true);
+            // waDatasetLocal.Add(tempLocalLoc);
+            // Debug.Log(tempLocalLoc);
+        }
+        //Traffic
+        myTextAsset = Resources.Load<TextAsset>("Traffic_hour"); // omit file extension
+        csvText = myTextAsset.text;
+        rows = csvText.Split(
+            new[] { "\r\n", "\r", "\n" },
+            StringSplitOptions.None
+        );
+        for (int i = 1; i < rows.GetLength(0) - 1; i++)
+        {
+            string[] dataRowArray = rows[i].Split(',');
+            trDataSet.Add(dataRowArray);
+            // Vector2d tempLoc = new Vector2d(double.Parse(dataRowArray[1]), double.Parse(dataRowArray[0]));
+            // Vector3 tempLocalLoc = _map.GeoToWorldPosition(tempLoc, true);
+            // trDatasetLocal.Add(tempLocalLoc);
+
+        }
+        //Route
+        myTextAsset = Resources.Load<TextAsset>("route"); // omit file extension
+        csvText = myTextAsset.text;
+        rows = csvText.Split(
+            new[] { "\r\n", "\r", "\n" },
+            StringSplitOptions.None
+        );
+        for (int i = 1; i < rows.GetLength(0) - 1; i++)
+        {
+
+            string[] dataRowArray = rows[i].Split(',');
+            roDataset.Add(dataRowArray);
+            // Vector2d tempLoc = new Vector2d(double.Parse(dataRowArray[1]), double.Parse(dataRowArray[0]));
+            // Vector3 tempLocalLoc = _map.GeoToWorldPosition(tempLoc, true);
+            // roDatasetLocal.Add(tempLocalLoc);
+
+        }
+
+
     }
 }
