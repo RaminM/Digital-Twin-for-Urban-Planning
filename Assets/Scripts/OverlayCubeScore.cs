@@ -3,33 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using Mapbox.Utils;
 using Mapbox.Unity.Map;
-
-public class BuildingParameterCalculator : MonoBehaviour
+public class OverlayCubeScore : MonoBehaviour
 {
-    private float minElevation = 0f, maxElevation = 30f, minRoadDistance = 0f, maxRoadDistance = 300f, minWalkability, maxWalkability,maxVisDistance = 50f;
+    private float minElevation = 0f, maxElevation = 30f, minRoadDistance = 0f, maxRoadDistance = 300f, minWalkability, maxWalkability, maxVisDistance = 50f;
     private int buildingHeight = 6;
-    private float powerScore, trafficScore, walkScore, visibilityScore, roadDistance;
-    UIManager uim;
+    private float powerScore, trafficScore, walkScore, visibilityScore, roadDistance, totalScore;
     Vector3 buildingLoc;
     private AbstractMap _map;
     private List<string[]> _walkdData, _roadData, _trafficData;
     void Awake()
     {
         buildingLoc = this.transform.position;
-
-        uim = GameObject.Find("Canvas").GetComponent<UIManager>();
-
     }
-    public void CalculateParameters(List<string[]> waDataSet, List<string[]> roDataset, List<string[]> trDataSet, AbstractMap myMap)
+    public void CalculateParameters(List<string[]> roDataset, List<string[]> trDataSet, AbstractMap myMap, float walkabScore)
     {
-        _walkdData = waDataSet;
+        walkScore = walkabScore;
         _roadData = roDataset;
         _map = myMap;
         _trafficData = trDataSet;
-        CalcWalkabilityScore();
         CalcPowerConsumption();
         CalcTrafficScore();
         CalcLightScore();
+        CalcTotalScore();
 
     }
 
@@ -37,7 +32,6 @@ public class BuildingParameterCalculator : MonoBehaviour
     {
         float elveation = this.gameObject.transform.position.y;
         powerScore = 1 - (elveation / maxElevation);
-        uim.SetPowerScore(powerScore);
 
     }
     private void CalcWalkabilityScore()
@@ -56,7 +50,6 @@ public class BuildingParameterCalculator : MonoBehaviour
                 walkScore = float.Parse(row[2]);
             }
         }
-        uim.SetWalkScore(walkScore);
     }
     private void CalcDistanceFromRoad()
     {
@@ -82,7 +75,6 @@ public class BuildingParameterCalculator : MonoBehaviour
         float div = roadDistance / maxRoadDistance;
         if (div > 1) div = 1;
         trafficScore = 1 - div;
-        uim.SetAccessibilityScore(trafficScore);
 
 
     }
@@ -93,13 +85,13 @@ public class BuildingParameterCalculator : MonoBehaviour
         for (int i = 1; i <= buildingHeight; i++)
         {
             ray.origin = new Vector3(this.transform.position.x, this.transform.position.y + i, this.transform.position.z);
-            for (int j = 0; j < 360; j++)
+            for (int j = 0; j < 360; j+=10)
             {
                 float angle = Mathf.Deg2Rad * j;
                 ray.direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
                 // Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 100f);
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit,maxVisDistance))
+                if (Physics.Raycast(ray, out hit, maxVisDistance))
                 {
                     numHit++;
                 }
@@ -110,9 +102,12 @@ public class BuildingParameterCalculator : MonoBehaviour
             }
         }
         visibilityScore = (numNothit / (numNothit + numHit));
-        uim.SetVisibilityScore(visibilityScore);
 
     }
-
-
+    private void CalcTotalScore()
+    {
+        totalScore = (walkScore + trafficScore + visibilityScore + powerScore) / 4;
+        // totalScore = walkScore;
+        GetComponent<Renderer>().material.color = new Color((1 - totalScore) , totalScore , 0,0.5f);
+    }
 }

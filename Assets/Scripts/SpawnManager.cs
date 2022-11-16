@@ -16,6 +16,7 @@ public class SpawnManager : MonoBehaviour
     private Camera _cameraPrefab, mainCamera;
     [SerializeField]
     AbstractMap _map;
+    [SerializeField] GameObject overLayContainer,overlayCube;
     private bool spawnHeatmap = false;
 
     private bool spawnLight = false, spawnCamera = false, spawnBuilding = false;
@@ -35,6 +36,8 @@ public class SpawnManager : MonoBehaviour
     List<string[]> waDataSet, trDataSet, roDataset;
     List<Vector3> trDatasetLocal, waDatasetLocal, roDatasetLocal;
     Vector2d[] waLocations, roLocations;
+    List<GameObject> overlayCubeList;
+    bool showOverlay;
 
     void Start()
     {
@@ -52,6 +55,7 @@ public class SpawnManager : MonoBehaviour
         roLocations = new Vector2d[roDataset.Count];
         waDataSet.RemoveAt(0);
         trDataSet.RemoveAt(0);
+        overlayCubeList = new List<GameObject>();
     }
     void Update()
     {
@@ -130,8 +134,7 @@ public class SpawnManager : MonoBehaviour
                     if (Physics.Raycast(ray, out hitData))
                     {
                         GameObject buildingIns = Instantiate(buildingPrefab, hitData.point, Quaternion.identity);
-                        buildingIns.GetComponent<BuildingParameterCalculator>().CalcWalkabilityScore(waDataSet,_map);
-                        buildingIns.GetComponent<BuildingParameterCalculator>().CalcPowerConsumption();
+                        buildingIns.GetComponent<BuildingParameterCalculator>().CalculateParameters(waDataSet, roDataset, trDataSet, _map);
                         spawnedBuildings.Add(buildingIns);
 
                     }
@@ -489,6 +492,47 @@ public class SpawnManager : MonoBehaviour
 
         }
 
+
+    }
+    public void SpawnOverlay()
+    {
+
+        if (overlayCubeList.Count == 0)
+        {
+
+            for (int i = 0; i < waDataSet.Count; i++)
+            {
+                double lat = double.Parse(waDataSet[i][0]);
+                double lon = double.Parse(waDataSet[i][1]);
+                waLocations[i] = new Vector2d(lat, lon);
+                var instance = Instantiate(overlayCube);
+                instance.transform.localPosition = _map.GeoToWorldPosition(waLocations[i], true);
+                instance.GetComponent<OverlayCubeScore>().CalculateParameters(roDataset,trDataSet,_map,float.Parse(waDataSet[i][2]));
+                instance.transform.localScale = new Vector3(overLayContainer.transform.localScale.x * 14f, overLayContainer.transform.localScale.y * 3, overLayContainer.transform.localScale.z * 14f);
+                instance.transform.parent = overLayContainer.transform;
+                overlayCubeList.Add(instance);
+            }
+            showOverlay = true;
+        }
+        if (showOverlay)
+        {
+            foreach (var wa in overlayCubeList)
+            {
+                wa.SetActive(true);
+
+            }
+            showOverlay = false;
+        }
+        else
+        {
+            foreach (var wa in overlayCubeList)
+            {
+                wa.SetActive(false);
+
+            }
+            overlayCubeList.Clear();
+            showOverlay = true;
+        }
 
     }
 }

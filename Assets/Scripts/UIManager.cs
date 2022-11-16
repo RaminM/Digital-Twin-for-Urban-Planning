@@ -10,11 +10,11 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     TMP_InputField inptYear, inptMonth, inptDay, inptHr, inptMin, simSpeed;
     [SerializeField]
-    TMP_Dropdown lightDropDown, camDropDown, heatDropDown, saveDropDown,itemDropDown;
+    TMP_Dropdown lightDropDown, camDropDown, heatDropDown, saveDropDown, itemDropDown;
     [SerializeField]
     private GameObject sun, spawnManager;
     [SerializeField]
-    TMP_Text txtWalkScore,txtPowerScore;
+    TMP_Text txtWalkScore, txtPowerScore, txtAccScore, txtVisScore;
 
     public void UpdateTimeDate(DateTime dateTime)
     {
@@ -59,7 +59,7 @@ public class UIManager : MonoBehaviour
     }
 
     public void DropDownChange()
-    {   
+    {
         spawnManager.GetComponent<SpawnManager>().ToggleItemSpawn(itemDropDown.value);
 
     }
@@ -154,11 +154,23 @@ public class UIManager : MonoBehaviour
         saveDropDown.ClearOptions();
         saveDropDown.AddOptions(sl);
     }
-    public void SetWalkScore(float score){
-        txtWalkScore.SetText("Walkability Score: " +score );
+    public void SetWalkScore(float score)
+    {
+        txtWalkScore.SetText("Walkability Score: " + Math.Round(score, 2));
     }
-    public void SetPowerScore(float score){
+    public void SetPowerScore(float score)
+    {
 
-        txtPowerScore.SetText("Energy Score: " +score );
+        txtPowerScore.SetText("Energy Score: " + Math.Round(score, 2));
+    }
+    public void SetAccessibilityScore(float score)
+    {
+
+        txtAccScore.SetText("Accessibility Score: " + Math.Round(score, 2));
+    }
+    public void SetVisibilityScore(float score)
+    {
+
+        txtVisScore.SetText("Visibility Score: " + Math.Round(score, 2));
     }
 }
