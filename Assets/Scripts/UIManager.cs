@@ -8,14 +8,32 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     [SerializeField]
-    TMP_InputField inptYear, inptMonth, inptDay, inptHr, inptMin, simSpeed;
+    TMP_InputField inptYear, inptMonth, inptDay, inptHr, inptMin, simSpeed,inWalk,inAcc,inVis,inEner;
     [SerializeField]
     TMP_Dropdown lightDropDown, camDropDown, heatDropDown, saveDropDown, itemDropDown;
     [SerializeField]
     private GameObject sun, spawnManager;
     [SerializeField]
     TMP_Text txtWalkScore, txtPowerScore, txtAccScore, txtVisScore;
-
+    float waWe, accWe,visWe,enWe;
+    void Start(){
+        inWalk.text = "25";
+        inAcc.text = "25";
+        inVis.text = "25";
+        inEner.text = "25";
+    }
+    public float ReadWalkWieght(){
+        return float.Parse(inWalk.text);
+    }
+        public float ReadEnergyWieght(){
+        return float.Parse(inEner.text);
+    }
+        public float ReadAccessiblityWieght(){
+        return float.Parse(inAcc.text);
+    }
+        public float ReadVisiblityWieght(){
+        return float.Parse(inVis.text);
+    }
     public void UpdateTimeDate(DateTime dateTime)
     {
         inptYear.text = dateTime.Year.ToString();

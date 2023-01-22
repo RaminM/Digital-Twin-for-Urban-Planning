@@ -15,8 +15,9 @@ public class OverlayCubeScore : MonoBehaviour
     {
         buildingLoc = this.transform.position;
     }
-    public void CalculateParameters(List<string[]> roDataset, List<string[]> trDataSet, AbstractMap myMap, float walkabScore)
+    public void CalculateParameters(List<string[]> roDataset, List<string[]> trDataSet, AbstractMap myMap, float walkabScore,float waWE,float enWE,float visWe,float accWe)
     {
+
         walkScore = walkabScore;
         _roadData = roDataset;
         _map = myMap;
@@ -24,10 +25,16 @@ public class OverlayCubeScore : MonoBehaviour
         CalcPowerConsumption();
         CalcTrafficScore();
         CalcLightScore();
-        CalcTotalScore();
+        CalcTotalScore( waWE, enWE, visWe, accWe);
+        // CheckOnLand();
 
     }
-
+    private void CheckOnLand(){
+        Ray ray = new Ray(this.transform.position,Vector3.down);
+        if(!Physics.Raycast(ray,Mathf.Infinity)){
+            GetComponent<Renderer>().material.color = new Color(1f,1f,1f,0f);
+        }
+    }
     private void CalcPowerConsumption()
     {
         float elveation = this.gameObject.transform.position.y;
@@ -104,9 +111,9 @@ public class OverlayCubeScore : MonoBehaviour
         visibilityScore = (numNothit / (numNothit + numHit));
 
     }
-    private void CalcTotalScore()
+    private void CalcTotalScore(float waWE,float enWE,float visWe,float accWe)
     {
-        totalScore = (walkScore + trafficScore + visibilityScore + powerScore) / 4;
+        totalScore = walkScore*waWE/100 + trafficScore*accWe/100 + visibilityScore*visWe/100 + powerScore*enWE/100;
         // totalScore = walkScore;
         GetComponent<Renderer>().material.color = new Color((1 - totalScore) , totalScore , 0,0.5f);
     }

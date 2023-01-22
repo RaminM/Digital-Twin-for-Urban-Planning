@@ -37,6 +37,7 @@ public class SpawnManager : MonoBehaviour
     List<Vector3> trDatasetLocal, waDatasetLocal, roDatasetLocal;
     Vector2d[] waLocations, roLocations;
     List<GameObject> overlayCubeList;
+    float waWe, accWe,visWe,enWe;
     bool showOverlay;
 
     void Start()
@@ -214,17 +215,17 @@ public class SpawnManager : MonoBehaviour
             Destroy(heatmapPreviewIns);
             Destroy(buildingPreviewIns);
         }
-        else if (ind == 1)
-        {
-            spawnLight = true;
-            spawnCamera = false;
-            spawnHeatmap = false;
-            spawnBuilding = false;
-            Destroy(heatmapPreviewIns);
-            Destroy(buildingPreviewIns);
+        // else if (ind == 1)
+        // {
+        //     spawnLight = true;
+        //     spawnCamera = false;
+        //     spawnHeatmap = false;
+        //     spawnBuilding = false;
+        //     Destroy(heatmapPreviewIns);
+        //     Destroy(buildingPreviewIns);
 
-        }
-        else if (ind == 2)
+        // }
+        else if (ind == 1)
         {
             spawnLight = false;
             spawnCamera = true;
@@ -233,20 +234,20 @@ public class SpawnManager : MonoBehaviour
             Destroy(heatmapPreviewIns);
             Destroy(buildingPreviewIns);
         }
-        else if (ind == 3)
-        {
-            if (heatmapPreviewIns == null)
-                heatmapPreviewIns = Instantiate(heatmapPrefab, this.transform.position, Quaternion.identity);
-            spawnHeatmap = true;
-            spawnLight = false;
-            spawnCamera = false;
-            spawnBuilding = false;
+        // else if (ind == 3)
+        // {
+        //     if (heatmapPreviewIns == null)
+        //         heatmapPreviewIns = Instantiate(heatmapPrefab, this.transform.position, Quaternion.identity);
+        //     spawnHeatmap = true;
+        //     spawnLight = false;
+        //     spawnCamera = false;
+        //     spawnBuilding = false;
 
-        }
-        else if (ind == 4)
+        // }
+        else if (ind == 2)
         {
             if (buildingPreviewIns == null)
-                buildingPreviewIns = Instantiate(heatmapPrefab, this.transform.position, Quaternion.identity);
+                buildingPreviewIns = Instantiate(buildingPrefab, this.transform.position, Quaternion.identity);
             spawnHeatmap = false;
             spawnLight = false;
             spawnCamera = false;
@@ -443,7 +444,7 @@ public class SpawnManager : MonoBehaviour
         string csvText;
         string[] rows;
         //Walkability
-        myTextAsset = Resources.Load<TextAsset>("walkability_n"); // omit file extension
+        myTextAsset = Resources.Load<TextAsset>("walkability_n_3"); // omit file extension
         csvText = myTextAsset.text;
         rows = csvText.Split(
             new[] { "\r\n", "\r", "\n" },
@@ -496,7 +497,10 @@ public class SpawnManager : MonoBehaviour
     }
     public void SpawnOverlay()
     {
-
+        waWe = canvas.GetComponent<UIManager>().ReadWalkWieght();
+        enWe = canvas.GetComponent<UIManager>().ReadEnergyWieght();
+        visWe = canvas.GetComponent<UIManager>().ReadVisiblityWieght();
+        accWe = canvas.GetComponent<UIManager>().ReadAccessiblityWieght();
         if (overlayCubeList.Count == 0)
         {
 
@@ -507,7 +511,7 @@ public class SpawnManager : MonoBehaviour
                 waLocations[i] = new Vector2d(lat, lon);
                 var instance = Instantiate(overlayCube);
                 instance.transform.localPosition = _map.GeoToWorldPosition(waLocations[i], true);
-                instance.GetComponent<OverlayCubeScore>().CalculateParameters(roDataset,trDataSet,_map,float.Parse(waDataSet[i][2]));
+                instance.GetComponent<OverlayCubeScore>().CalculateParameters(roDataset,trDataSet,_map,float.Parse(waDataSet[i][2]),waWe,enWe,visWe,accWe);
                 instance.transform.localScale = new Vector3(overLayContainer.transform.localScale.x * 14f, overLayContainer.transform.localScale.y * 3, overLayContainer.transform.localScale.z * 14f);
                 instance.transform.parent = overLayContainer.transform;
                 overlayCubeList.Add(instance);

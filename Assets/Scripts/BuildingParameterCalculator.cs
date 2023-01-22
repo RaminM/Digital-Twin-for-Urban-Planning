@@ -6,7 +6,7 @@ using Mapbox.Unity.Map;
 
 public class BuildingParameterCalculator : MonoBehaviour
 {
-    private float minElevation = 0f, maxElevation = 30f, minRoadDistance = 0f, maxRoadDistance = 300f, minWalkability, maxWalkability,maxVisDistance = 50f;
+    private float minElevation = 0f, maxElevation = 30f, minRoadDistance = 0f, maxRoadDistance = 300f, minWalkability, maxWalkability, maxVisDistance = 50f;
     private int buildingHeight = 6;
     private float powerScore, trafficScore, walkScore, visibilityScore, roadDistance;
     UIManager uim;
@@ -30,9 +30,17 @@ public class BuildingParameterCalculator : MonoBehaviour
         CalcPowerConsumption();
         CalcTrafficScore();
         CalcLightScore();
-
+        // CheckOnLand();
     }
-
+    // private void CheckOnLand()
+    // {
+    //     RaycastHit hitData;
+    //     Ray ray = new Ray(this.transform.position, Vector3.down);
+    //     if (Physics.Raycast(ray, out hitData, Mathf.Infinity,6))
+    //     {
+    //         Debug.Log("Hit terrain");
+    //     }
+    // }
     private void CalcPowerConsumption()
     {
         float elveation = this.gameObject.transform.position.y;
@@ -99,7 +107,7 @@ public class BuildingParameterCalculator : MonoBehaviour
                 ray.direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
                 // Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 100f);
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit,maxVisDistance))
+                if (Physics.Raycast(ray, out hit, maxVisDistance))
                 {
                     numHit++;
                 }
